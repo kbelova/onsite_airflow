@@ -1,0 +1,29 @@
+CREATE USER dwh_team WITH LOGIN PASSWORD '12345' SUPERUSER;
+GRANT ALL PRIVILEGES ON DATABASE airflow TO dwh_team;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO dwh_team;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO dwh_team;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO dwh_team;
+
+CREATE SCHEMA IF NOT EXISTS onsite_schema AUTHORIZATION dwh_team, airflow;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA onsite_schema TO dwh_team;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA onsite_schema TO dwh_team;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA onsite_schema TO dwh_team;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA onsite_schema TO airflow;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA onsite_schema TO airflow;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA onsite_schema TO airflow;
+
+DROP TABLE IF EXISTS onsite_schema.currencies;
+DROP TABLE IF EXISTS onsite_schema.​currency_horizontal;
+
+CREATE TABLE if not exists onsite_schema.​currency_horizontal
+(
+date date,
+gbp NUMERIC,
+usd NUMERIC,
+brl NUMERIC,
+chf NUMERIC
+);
+
+TRUNCATE TABLE onsite_schema.​currency_horizontal;
+

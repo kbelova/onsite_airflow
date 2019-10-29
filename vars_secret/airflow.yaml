@@ -1,0 +1,13 @@
+airflow_postgres_user: airflow
+airflow_postgres_pass: airflow
+airflow_postgres_db: airflow
+airflow_fernet_key: '46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho='
+airflow_postgres_usr_pass: airflow
+dwh_team_postgres_pass: 12345
+
+airflow_users:
+  - {"user": "guest", "first_name": "guest",  "last_name": "guest", "email": "guest", "password": "12345", "role": "Admin"}
+
+airflow_connections:
+  - {"conn_id": "psql_airflow_db", "conn_type": "postgres", "host": "airflow_postgres_1", "schema": "airflow", "login": "airflow", "password": "airflow", "port": 5432, "extra":"", "is_encrypted": "FALSE", "is_extra_encrypted": "FALSE"}
+  - {"conn_id": "psql_db", "conn_type": "postgres", "host": "airflow_postgres_1", "schema": "public", "login": "airflow", "password": "airflow", "port": 5432, "extra":"", "is_encrypted": "FALSE", "is_extra_encrypted": "FALSE"}

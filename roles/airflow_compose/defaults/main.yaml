@@ -1,0 +1,12 @@
+airflow_home: "/usr/local/airflow"
+remote_airflow_folder: '{{ home_path }}/airflow'
+num_airflow_workers: 4
+default_meta_db_user: dwh_team
+should_become: True
+
+expose_config: False
+log_level: INFO
+navbar_color: '#037715'
+run_as: airflow
+
+airflow_components: core

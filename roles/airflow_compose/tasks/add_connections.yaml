@@ -1,0 +1,15 @@
+- name: Copy connection sql script to remote
+  template:
+    src: ./roles/airflow_compose/templates/connections_sql.j2
+    dest: '{{remote_airflow_folder}}/connections.sql'
+  tags:
+    - airflow_update_connections
+
+- name: Execute connections.sql to all the connections to airflow
+  shell: "cd {{ home_path }}/airflow; export PGPASSWORD='{{airflow_postgres_pass}}'; psql -U airflow -h localhost -p 5434 -a -f connections.sql"
+  tags:
+    - airflow_update_connections
+
+- shell: "rm {{ home_path }}/airflow/connections.sql"
+  tags:
+    - airflow_update_connections

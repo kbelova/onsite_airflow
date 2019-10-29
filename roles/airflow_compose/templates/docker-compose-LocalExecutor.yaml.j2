@@ -1,0 +1,59 @@
+version: '2.1'
+services:
+    postgres:
+        build:
+          context: .
+          dockerfile: Dockerfile_postgres_meta_db
+        environment:
+            - POSTGRES_USER=airflow
+            - POSTGRES_PASSWORD=airflow
+            - POSTGRES_DB=airflow
+        command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
+        ports:
+            - "5434:5432"
+        volumes:
+            - {{ home_path }}/postgres-data:/var/lib/postgresql/data
+            - {{remote_airflow_folder}}/postgresql.conf:/etc/postgresql/postgresql.conf
+            - {{ remote_airflow_folder }}/currency.csv:/tmp/data/currency.csv
+        restart: always
+
+    webserver:
+        build:
+            context: .
+            dockerfile: Dockerfile_airflow
+        restart: always
+        depends_on:
+            - postgres
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Local
+            - RUN_AS={{ run_as }}
+            - AIRFLOW_HOME={{ airflow_home }}
+            - AIRFLOW__CORE__FERNET_KEY={{airflow_fernet_key}}
+            - AIRFLOW__CORE__LOGGING_LEVEL={{ log_level }}
+            - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://{{airflow_postgres_user}}:{{airflow_postgres_pass}}@postgres:5432/{{airflow_postgres_db}}
+            - AIRFLOW__CORE__DAGS_FOLDER={{ airflow_home }}/dags
+            - AIRFLOW__WEBSERVER__RBAC=True
+            - AIRFLOW__WEBSERVER__FILTER_BY_OWNER=False
+            - AIRFLOW__WEBSERVER__AUTHENTICATE=True
+            - AIRFLOW__WEBSERVER__AUTH_BACKEND=airflow.contrib.auth.backends.password_auth
+            - AIRFLOW__WEBSERVER__EXPOSE_CONFIG={{ expose_config }}
+            - AIRFLOW__WEBSERVER__DAG_DEFAULT_VIEW=graph
+            - AIRFLOW__WEBSERVER__WORKERS=2 # 2 * NUM_CPU_CORES + 1
+            - AIRFLOW__WEBSERVER__WORKER_REFRESH_INTERVAL=1800 # Restart workers every 30min instead of 30seconds
+            - AIRFLOW__WEBSERVER__WEB_SERVER_WORKER_TIMEOUT=300 #Kill workers if they don't start within 5min instead of 2min
+
+            # we would like to have red color for navigation bar at production!
+            - AIRFLOW__WEBSERVER__NAVBAR_COLOR={{ navbar_color }}
+            - HOME_PATH={{ home_path }}
+            - REPO_PATH={{ repo_path }}
+
+
+        volumes:
+            - {{ home_path }}{{ repo_path }}/onsite_project/dags:{{ airflow_home }}/dags
+            - {{ home_path }}{{ repo_path }}/onsite_project/plugins:{{ airflow_home }}/plugins
+            - {{ home_path }}{{ repo_path }}/onsite_project/sql:{{ airflow_home }}/sql
+            - {{ home_path }}{{ repo_path }}/onsite_project/jars:{{ airflow_home }}/jars
+        ports:
+            - "8080:8080"
+        command: webserver

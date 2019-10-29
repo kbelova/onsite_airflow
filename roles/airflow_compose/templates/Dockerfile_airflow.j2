@@ -1,0 +1,41 @@
+FROM puckel/docker-airflow:1.10.1
+ENV AIRFLOW_HOME {{ airflow_home }}
+
+USER root
+WORKDIR {{ airflow_home }}
+
+# install sudo, add airflow user to sudoers
+RUN apt-get update && \
+    apt-get install sudo && \
+    mkdir -p /usr/share/man/man1 && mkdir -p /usr/share/man/man7 && \
+    apt-get install -y libpq-dev && \
+    apt-get install -y python-dev && \
+    apt-get install -y python-psycopg2 && \
+    apt-get install -yqq  libkrb5-dev libsasl2-dev gcc mc && \
+    apt-get install -y --no-install-recommends postgresql-client && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+RUN sudo adduser ubuntu && \
+    usermod -aG sudo ubuntu && \
+    echo 'ubuntu     ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+RUN usermod -aG sudo airflow && \
+    echo 'airflow     ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN pwd && ls -alth
+WORKDIR /home/ubuntu
+RUN pwd && ls -alth
+
+# Install all airflow plugins
+RUN pip install --upgrade pip && \
+    pip uninstall -yq pyopenssl psycopg2 psycopg2-binary && \
+    pip install    pyasn1==0.4.6 pyopenssl psycopg2-binary && \
+    pip install    flask-bcrypt && \
+    pip install    apache-airflow[s3,async,kubernetes,slack,ssh,redis,postgres]==1.10.1
+
+USER airflow
+WORKDIR {{ airflow_home }}
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["webserver"] # set default arg for entrypoint
+
+

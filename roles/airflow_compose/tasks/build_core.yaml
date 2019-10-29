@@ -1,0 +1,32 @@
+- name: Copy airflow compose file to remote
+  template:
+    src: docker-compose-LocalExecutor.yaml.j2
+    dest: '{{remote_airflow_folder}}/docker-compose-LocalExecutor.yml'
+
+- name: Build all docker files
+  shell: 'cd {{ home_path }}/airflow && docker-compose -f docker-compose-LocalExecutor.yml build'
+
+- name: Start Airflow
+  shell: 'cd {{ home_path }}/airflow && docker-compose -f docker-compose-LocalExecutor.yml up -d'
+
+- name: Wait for postgres to start
+  pause:
+    minutes: 1
+
+- name: Add users
+  include_tasks: add_users.yaml
+  when: airflow_components == 'core'
+  tags:
+    - airflow_update_logins
+
+- name: Include add connections task
+  include_tasks: add_connections.yaml
+  when: airflow_components == 'core'
+  tags:
+    - airflow_update_connections
+
+- name: Insert data to table
+  shell: |
+    docker exec airflow_postgres_1 psql -U airflow -h localhost -c "COPY onsite_schema.​currency_horizontal FROM '/tmp/data/currency.csv' DELIMITERS ',' CSV;"
+  tags:
+    - insert_data

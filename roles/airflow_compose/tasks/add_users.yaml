@@ -1,0 +1,17 @@
+- name: copy login script to remote
+  template:
+    src: ./roles/airflow_compose/templates/logins_sql.j2
+    dest: '{{remote_airflow_folder}}/logins.sql'
+  tags:
+    - airflow_update_logins
+
+- name: Execute logins.sql to add all the passwords for Airflow
+  shell: "cd {{ home_path }}/airflow; export PGPASSWORD='{{airflow_postgres_pass}}'; psql -U airflow -h localhost -p 5434 -a -f logins.sql"
+
+- shell: "rm {{ home_path }}/airflow/logins.sql"
+
+- name: add user
+  shell: |
+    docker exec airflow_webserver_1 sh -c "airflow create_user -r Admin -u {{item.user}} -f {{item.first_name}} -l {{item.last_name}} -e {{item.email}} -p {{item.password}}"
+  with_items: "{{airflow_users}}"
+  ignore_errors: True

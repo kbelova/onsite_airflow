@@ -1,0 +1,11 @@
+TRUNCATE TABLE public.connection;
+
+{% for item in airflow_connections %}
+	INSERT INTO public.connection( conn_id,conn_type, host, schema, login, password,
+    {%- if 'port' in item %} port, {% endif -%}
+	 extra, is_encrypted, is_extra_encrypted)
+     VALUES ( '{{item.conn_id}}', '{{item.conn_type}}', '{{item.host}}', '{{item.schema}}', '{{item.login}}', '{{item.password}}',
+     {%- if 'port' in item %} {{item.port }}, {% endif -%}
+      '{{item.extra}}', {{item.is_encrypted}}, {{item.is_extra_encrypted}} );
+{% endfor %}
+

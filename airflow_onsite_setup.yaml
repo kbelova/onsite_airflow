@@ -1,0 +1,66 @@
+---
+# Deploy locally airflow cluster for testing purposes
+#  cd ~/IdeaProjects/onsite_airflow && ansible-playbook --extra-vars "repo_path=/IdeaProjects owner=$(whoami) home_path=/home/$(whoami) should_become=False  num_airflow_workers=1" -vvv airflow_onsite_setup.yaml
+#
+#    to down docker-compose containers and network
+#  cd ~/airflow && docker-compose -f docker-compose-CeleryExecutor.yml down
+#    to build images in docker compose
+#  cd ~/airflow && docker-compose -f docker-compose-CeleryExecutor.yml build
+#
+#  cd ~/airflow && docker-compose -f docker-compose-CeleryExecutor.yml up -d
+#
+#  To resume ansible playbook play from the failed task after fixing issue
+#   ansible-playbook playbook.yml --start-at-task="failed task name"
+#
+#
+# You might want to clear docker containers before installation
+# IMPORTANT! The following commands will stop all running containers, remove all containers and delete all images
+#   >> docker kill $(docker ps -q)       # kill all running containers
+#   >> docker rm $(docker ps -a -q)      # delete all stopped containers
+#   >> docker rmi -f $(docker images -q) # delete all images
+#
+#
+# Execute commands locally:
+#   docker exec -it airflow_worker_1 sh -c "airflow list_dags"
+#   docker exec -it airflow_worker_1 sh -c "airflow test tests_sumup_env_dag tests_sumup_env_operator"
+#   docker exec -it airflow_worker_1 sh -c "airflow trigger_dag -e 2020-11-15 tests_sumup_env_dag"
+#
+# Airflow see logs:
+#   docker logs -f airflow_webserver_1
+#
+# Airflow restart webserver (for example, after updates of custom plugins)
+#   docker restart  airflow_webserver_1
+#
+# To connect to psql
+# psql -U airflow
+# \dt+ .*
+
+- name: Deploy Airflow on localhost
+  hosts: localhost
+  connection: local
+  vars:
+    - expose_config: True
+    - log_level: DEBUG
+  gather_facts: True
+  tasks:
+    - name: Fill in run_as var
+      shell: |
+        whoami
+      register: user_running
+
+    - name: install psql on ubuntu
+      apt: name=postgresql-client state=installed
+      ignore_errors: True
+      tags:
+        - pre-install
+        - install-airflow
+
+    - name: Setup Airflow compose Puckel
+      vars:
+        - run_as: "{{ user_running.stdout }}"
+      include_role:
+        name: airflow_compose
+      tags:
+        - install-airflow
+
+
